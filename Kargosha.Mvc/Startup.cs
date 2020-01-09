@@ -1,10 +1,13 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Kargosha.Data.Services.Identity;
+using Kargosha.Data.Context;
+using Kargosha.Data.Domain.Identity;
+using Kargosha.Data.Services.Identity.Managers;
+using Kargosha.Data.Services.Identity.Stores;
+using Kargosha.Data.Services.Identity.Validators;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -24,6 +27,56 @@ namespace Kargosha.Mvc
 		public void ConfigureServices(IServiceCollection services)
 		{
 			services.AddControllersWithViews();
+
+			services.AddDbContext<KargoshaDbContext>(options =>
+			{
+				options.UseSqlServer(
+					connectionString: Configuration.GetConnectionString("KargoshaConnection")
+					);
+			});
+
+			services.AddIdentity<User, Role>(option =>
+			{
+				option.User.RequireUniqueEmail = true;
+
+				option.Password.RequireDigit = false;
+				option.Password.RequireLowercase = false;
+				option.Password.RequireUppercase = false;
+				option.Password.RequireNonAlphanumeric = false;
+
+				option.SignIn.RequireConfirmedAccount = false;
+				option.SignIn.RequireConfirmedEmail = false;
+				option.SignIn.RequireConfirmedPhoneNumber = false;
+				// رمزنگاری اطلاعات کاربر در دیتابیس
+				//option.Stores.ProtectPersonalData = false;
+				// ایجاد توکن برای تغییر رمز، ارسال ایمیل،‌ارسال پیمک و ...
+				// ما از AddDefaultTokenProviders استفاده کرده ایم
+				//option.Tokens.
+
+			})
+				//.AddEntityFrameworkStores<KargoshaDbContext>()
+				// به جای استفاده از استور پیش فرض از استورهایی که خودمان ساخته ایم استفاده میکنیم
+				.AddRoleStore<AppRoleStore>()
+				.AddUserStore<AppUserStore>()
+				// جهت استفاده از ولیدیتورهای خودمون
+				.AddUserValidator<AppUserValidator>()
+				.AddRoleValidator<AppRoleValidator>()
+				// استفاده از منجرهای خودمان
+				.AddUserManager<AppUserManager>()
+				.AddRoleManager<AppRoleManager>()
+				.AddSignInManager<AppSigninManager>()
+				// پیامهای فارسی
+				.AddErrorDescriber<AppErrorDescriber>()
+				//
+				.AddClaimsPrincipalFactory<AppUserClaimsPrincipalFactory>()
+				.AddDefaultTokenProviders();
+
+			services.ConfigureApplicationCookie(options =>
+			{
+				// تغییر نام کوکی
+				options.Cookie.Name = "Kargosha.Cooki";
+			});
+
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
