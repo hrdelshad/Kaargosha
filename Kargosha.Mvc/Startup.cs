@@ -104,6 +104,16 @@ namespace Kargosha.Mvc
 				endpoints.MapControllerRoute(
 					name: "default",
 					pattern: "{controller=Home}/{action=Index}/{id?}");
+
+				endpoints.MapAreaControllerRoute(
+					name: "MemberPanel", 
+					areaName: "member", 
+					pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+				endpoints.MapAreaControllerRoute(
+					name: "AdminPanel",
+					areaName: "admin",
+					pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 			});
 		}
 	}
